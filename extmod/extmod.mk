@@ -429,6 +429,13 @@ include $(TOP)/extmod/wasmmod/ports/micropython/micropython.mk
 endif
 
 ################################################################################
+# metal (pymergetic.metal) — consumes wasmmod util.mem; no second TLSF
+
+ifeq ($(MICROPY_PY_METAL),1)
+include $(TOP)/extmod/metal/metal.mk
+endif
+
+################################################################################
 # btree
 
 ifeq ($(MICROPY_PY_BTREE),1)
