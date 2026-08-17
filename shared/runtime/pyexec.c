@@ -55,6 +55,16 @@ static bool repl_display_debugging_info = 0;
 #define EXEC_FLAG_SOURCE_IS_READER      (1 << 6)
 #define EXEC_FLAG_NO_INTERRUPT          (1 << 7)
 
+static void pyexec_repl_banner(void) {
+    mp_hal_stdout_tx_str(MICROPY_BANNER_NAME_AND_VERSION);
+    mp_hal_stdout_tx_str("; " MICROPY_BANNER_MACHINE);
+    mp_hal_stdout_tx_str("\r\n");
+    #if MICROPY_PY_BUILTINS_HELP
+    mp_hal_stdout_tx_str("Type \"help()\" for more information.\r\n");
+    #endif
+    MICROPY_PYEXEC_BANNER_HOOK;
+}
+
 // parses, compiles and executes the code in the lexer
 // frees the lexer before returning
 // EXEC_FLAG_PRINT_EOF prints 2 EOF chars: 1 after normal output, 1 after exception output
@@ -448,12 +458,7 @@ static int pyexec_friendly_repl_process_char(int c) {
         } else if (ret == CHAR_CTRL_B) {
             // reset friendly REPL
             mp_hal_stdout_tx_str("\r\n");
-            mp_hal_stdout_tx_str(MICROPY_BANNER_NAME_AND_VERSION);
-            mp_hal_stdout_tx_str("; " MICROPY_BANNER_MACHINE);
-            mp_hal_stdout_tx_str("\r\n");
-            #if MICROPY_PY_BUILTINS_HELP
-            mp_hal_stdout_tx_str("Type \"help()\" for more information.\r\n");
-            #endif
+            pyexec_repl_banner();
             goto input_restart;
         } else if (ret == CHAR_CTRL_C) {
             // break
@@ -621,12 +626,7 @@ int pyexec_friendly_repl(void) {
     mp_hal_stdio_mode_raw();
 
 friendly_repl_reset:
-    mp_hal_stdout_tx_str(MICROPY_BANNER_NAME_AND_VERSION);
-    mp_hal_stdout_tx_str("; " MICROPY_BANNER_MACHINE);
-    mp_hal_stdout_tx_str("\r\n");
-    #if MICROPY_PY_BUILTINS_HELP
-    mp_hal_stdout_tx_str("Type \"help()\" for more information.\r\n");
-    #endif
+    pyexec_repl_banner();
 
     // to test ctrl-C
     /*

@@ -424,15 +424,19 @@ endif
 # Submodule: extmod/wasmmod (Rouven Raudzus <raudzus@pymergetic.com>)
 # Runtime: nested WAMR (https://github.com/bytecodealliance/wasm-micro-runtime, Apache-2.0)
 
-ifeq ($(MICROPY_PY_WASM),1)
-include $(TOP)/extmod/wasmmod/ports/micropython/micropython.mk
-endif
-
 ################################################################################
 # metal (pymergetic.metal) — consumes wasmmod util.mem; no second TLSF
+#
+# Ahead of wasmmod on purpose: Metal is the downstream crate, so it names the
+# cargo package and staticlib this seat links before wasmmod's fragment falls
+# back to its own. wasmmod carries no knowledge of Metal.
 
 ifeq ($(MICROPY_PY_METAL),1)
 include $(TOP)/extmod/metal/metal.mk
+endif
+
+ifeq ($(MICROPY_PY_WASM),1)
+include $(TOP)/extmod/wasmmod/ports/micropython/micropython.mk
 endif
 
 ################################################################################

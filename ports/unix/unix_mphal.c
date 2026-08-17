@@ -35,6 +35,9 @@
 #include "py/mpthread.h"
 #include "py/runtime.h"
 #include "extmod/misc.h"
+#if defined(MICROPY_PY_METAL) && MICROPY_PY_METAL
+#include "pymergetic/metal/console.h"
+#endif
 
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 #if __GLIBC_PREREQ(2, 25)
@@ -185,9 +188,16 @@ main_term:;
 }
 
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
+    mp_uint_t written;
+#if defined(MICROPY_PY_METAL) && MICROPY_PY_METAL
+    uint32_t n = len > 0xffffffffu ? 0xffffffffu : (uint32_t)len;
+    (void)pm_metal_console_write(str, n);
+    written = (mp_uint_t)n;
+#else
     ssize_t ret;
     MP_HAL_RETRY_SYSCALL(ret, write(STDOUT_FILENO, str, len), {});
-    mp_uint_t written = ret < 0 ? 0 : ret;
+    written = ret < 0 ? 0 : ret;
+#endif
     int dupterm_res = mp_os_dupterm_tx_strn(str, len);
     if (dupterm_res >= 0) {
         written = MIN((mp_uint_t)dupterm_res, written);

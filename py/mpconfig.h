@@ -1218,6 +1218,11 @@ typedef time_t mp_timestamp_t;
 #define MICROPY_PYEXEC_ENABLE_EXIT_CODE_HANDLING (0)
 #endif
 
+// Extra statement after the friendly-REPL banner (Ctrl-B and first prompt).
+#ifndef MICROPY_PYEXEC_BANNER_HOOK
+#define MICROPY_PYEXEC_BANNER_HOOK ((void)0)
+#endif
+
 // Support for internal scheduler
 #ifndef MICROPY_ENABLE_SCHEDULER
 #define MICROPY_ENABLE_SCHEDULER (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)

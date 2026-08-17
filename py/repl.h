@@ -34,6 +34,8 @@
 
 #if MICROPY_PY_SYS_PS1_PS2
 
+#include "py/mpstate.h" /* MP_SYS_MUTABLE_PS1 / PS2 */
+
 const char *mp_repl_get_psx(unsigned int entry);
 
 static inline const char *mp_repl_get_ps1(void) {
@@ -46,12 +48,19 @@ static inline const char *mp_repl_get_ps2(void) {
 
 #else
 
+#ifndef MICROPY_REPL_PS1
+#define MICROPY_REPL_PS1 ">>> "
+#endif
+#ifndef MICROPY_REPL_PS2
+#define MICROPY_REPL_PS2 "... "
+#endif
+
 static inline const char *mp_repl_get_ps1(void) {
-    return ">>> ";
+    return MICROPY_REPL_PS1;
 }
 
 static inline const char *mp_repl_get_ps2(void) {
-    return "... ";
+    return MICROPY_REPL_PS2;
 }
 
 #endif

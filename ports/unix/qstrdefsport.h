@@ -25,3 +25,13 @@
  */
 
 // *FORMAT-OFF*
+// Q(id) is a qstr pool line for makeqstrdata.py, not a C function.
+#ifndef Q
+#define Q(id)
+#endif
+
+Q(quit)
+Q(reboot)
+Q(shutdown)
+Q(process)
+

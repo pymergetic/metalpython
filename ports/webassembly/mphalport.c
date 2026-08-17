@@ -27,6 +27,9 @@
 #include <unistd.h>
 #include "py/mphal.h"
 #include "library.h"
+#if defined(MICROPY_PY_METAL) && MICROPY_PY_METAL
+#include "pymergetic/metal/console.h"
+#endif
 
 static void stderr_print_strn(void *env, const char *str, size_t len) {
     (void)env;
@@ -36,7 +39,13 @@ static void stderr_print_strn(void *env, const char *str, size_t len) {
 const mp_print_t mp_stderr_print = {NULL, stderr_print_strn};
 
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
+#if defined(MICROPY_PY_METAL) && MICROPY_PY_METAL
+    uint32_t n = len > 0xffffffffu ? 0xffffffffu : (uint32_t)len;
+    (void)pm_metal_console_write(str, n);
+    return (mp_uint_t)n;
+#else
     return write(1, str, len);
+#endif
 }
 
 void mp_hal_delay_ms(mp_uint_t ms) {
