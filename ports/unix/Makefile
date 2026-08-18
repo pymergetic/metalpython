@@ -27,6 +27,15 @@ include $(VARIANT_DIR)/mpconfigvariant.mk
 # Use the default frozen manifest, variants may override this.
 FROZEN_MANIFEST ?= variants/manifest.py
 
+# Freeze against the firmware's collected QSTRs so mpy-tool dedupes names the
+# C code already owns (e.g. ``cert`` in ssl + a C keyword). Without this, a
+# name in both frozen content and qstrdefs.generated.h redeclares the
+# enumerator in frozen_content.c.
+ifneq ($(FROZEN_MANIFEST),)
+MPY_TOOL_FLAGS ?= --qstr-header $(BUILD)/genhdr/qstrdefs.preprocessed.h
+endif
+
+
 # This should be configured by the mpconfigvariant.mk
 PROG ?= micropython
 
