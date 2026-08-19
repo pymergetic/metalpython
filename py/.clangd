@@ -1,0 +1,12 @@
+# py/qstrdefs.h (and the other py/*defs.h) are MicroPython generator inputs,
+# not C headers. They are `cat`+`sed`-wrapped, run through the C preprocessor
+# only to expand #if/#endif, then parsed by makeqstrdata.py / makemoduledefs.py.
+# The QCFG(...)/Q(...) lines are a DSL that is never valid C (QCFG is an
+# undefined function-like construct), so clangd flagging "expected identifier"
+# / "expected function body" on them is noise. Suppress those parse diagnostics.
+If:
+  PathMatch: .*/(qstrdefs|qstrdefsport|qstrdefsextra)\.h$
+Diagnostics:
+  Suppress:
+    - err_expected
+    - err_expected_function_body

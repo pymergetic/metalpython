@@ -31,7 +31,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "py/parsenum.h"
 #include "py/compile.h"
 #include "py/objstr.h"
 #include "py/objtuple.h"
@@ -41,6 +40,7 @@
 #include "py/objgenerator.h"
 #include "py/smallint.h"
 #include "py/stream.h"
+#include "py/mpthread.h"
 #include "py/runtime.h"
 #include "py/builtin.h"
 #include "py/cstack.h"
@@ -187,7 +187,11 @@ void mp_init(void) {
     #endif
 
     #if MICROPY_PY_THREAD_GIL
+    #if MICROPY_PY_THREAD && MICROPY_PY_THREAD_RECURSIVE_MUTEX
+    mp_thread_recursive_mutex_init(&MP_STATE_VM(gil_mutex));
+    #else
     mp_thread_mutex_init(&MP_STATE_VM(gil_mutex));
+    #endif
     #endif
 
     // call port specific initialization if any

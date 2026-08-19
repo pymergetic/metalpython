@@ -29,12 +29,14 @@
 #include <stdint.h>
 
 #include "py/mpconfig.h"
-#include "py/mpthread.h"
 #include "py/misc.h"
 #include "py/nlr.h"
 #include "py/obj.h"
-#include "py/objlist.h"
+#include "py/objlist.h" // IWYU pragma: keep — required for mp_obj_list_t used via genhdr/root_pointers.h
 #include "py/objexcept.h"
+#if MICROPY_PY_THREAD
+#include "py/mpthread.h"
+#endif
 
 // This file contains structures defining the state of the MicroPython
 // memory system, runtime and virtual machine.  The state is a global
@@ -267,7 +269,16 @@ typedef struct _mp_state_vm_t {
 
     #if MICROPY_PY_THREAD_GIL
     // This is a global mutex used to make the VM/runtime thread-safe.
+    // The owner thread (the boot/REPL thread is already executing bytecode) may
+    // re-enter the interpreter through a C callback that steps a vm_only task
+    // (metal.register_upy, metal async runner stepping). A plain mutex would
+    // self-deadlock re-acquiring its own GIL there, so make it recursive when
+    // the port provides a recursive mutex (unix: MICROPY_PY_THREAD_RECURSIVE_MUTEX).
+    #if MICROPY_PY_THREAD && MICROPY_PY_THREAD_RECURSIVE_MUTEX
+    mp_thread_recursive_mutex_t gil_mutex;
+    #else
     mp_thread_mutex_t gil_mutex;
+    #endif
     #endif
 
     #if MICROPY_OPT_MAP_LOOKUP_CACHE

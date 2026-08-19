@@ -66,6 +66,9 @@ Q(<string>)
 Q(<stdin>)
 Q(utf-8)
 
+#if MICROPY_PY_THREAD_GIL
+Q(GIL)
+#endif
 #if MICROPY_MODULE_FROZEN
 Q(.frozen)
 #endif
