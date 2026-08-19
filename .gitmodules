@@ -111,3 +111,7 @@
 	path = extmod/metal
 	url = https://github.com/pymergetic/metal.git
 	branch = experimental3
+[submodule "lib/zenoh-pico"]
+	path = lib/zenoh-pico
+	url = https://github.com/eclipse-zenoh/zenoh-pico.git
+	branch = main
