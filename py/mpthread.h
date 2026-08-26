@@ -58,18 +58,27 @@ void mp_thread_recursive_mutex_unlock(mp_thread_recursive_mutex_t *mutex);
 
 #if MICROPY_PY_THREAD && MICROPY_PY_THREAD_GIL
 #include "py/mpstate.h"
+
+typedef void (*pm_metal_async_gil_on_release_fn)(void);
+
 #if MICROPY_PY_THREAD_RECURSIVE_MUTEX
-// The GIL may be re-entered by its owner (the boot/REPL thread already running
-// bytecode) when a C callback steps a vm_only task; a plain mutex would
-// self-deadlock there. The recursive form matches the gc_mutex treatment.
 #define MP_THREAD_GIL_ENTER() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
-#define MP_THREAD_GIL_EXIT() mp_thread_recursive_mutex_unlock(&MP_STATE_VM(gil_mutex))
+#define MP_THREAD_GIL_EXIT() do { \
+    mp_thread_recursive_mutex_unlock(&MP_STATE_VM(gil_mutex)); \
+    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+} while (0)
 #define MP_THREAD_GIL_TRYLOCK() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #else
 #define MP_THREAD_GIL_ENTER() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
-#define MP_THREAD_GIL_EXIT() mp_thread_mutex_unlock(&MP_STATE_VM(gil_mutex))
+#define MP_THREAD_GIL_EXIT() do { \
+    mp_thread_mutex_unlock(&MP_STATE_VM(gil_mutex)); \
+    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+} while (0)
 #define MP_THREAD_GIL_TRYLOCK() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #endif
+
+extern pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release;
+
 #else
 #define MP_THREAD_GIL_ENTER()
 #define MP_THREAD_GIL_EXIT()

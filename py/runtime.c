@@ -192,6 +192,8 @@ void mp_init(void) {
     #else
     mp_thread_mutex_init(&MP_STATE_VM(gil_mutex));
     #endif
+
+    __attribute__((unused)) pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release = NULL;
     #endif
 
     // call port specific initialization if any
