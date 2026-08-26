@@ -68,6 +68,13 @@ MP_REGISTER_MODULE(MP_QSTR___main__, mp_module___main__);
 
 #define TYPE_HAS_ITERNEXT(type) (type->flags & (MP_TYPE_FLAG_ITER_IS_ITERNEXT | MP_TYPE_FLAG_ITER_IS_CUSTOM | MP_TYPE_FLAG_ITER_IS_STREAM))
 
+#if MICROPY_PY_THREAD && MICROPY_PY_THREAD_GIL
+/* GIL release hook: set by modmetal.c at boot, called from MP_THREAD_GIL_EXIT
+ * to wake parked async workers. Defined here so py/runtime.o links the symbol
+ * for every seat — no stubs needed. */
+pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release = NULL;
+#endif
+
 void mp_init(void) {
     qstr_init();
 
@@ -192,8 +199,6 @@ void mp_init(void) {
     #else
     mp_thread_mutex_init(&MP_STATE_VM(gil_mutex));
     #endif
-
-    __attribute__((unused)) pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release = NULL;
     #endif
 
     // call port specific initialization if any
