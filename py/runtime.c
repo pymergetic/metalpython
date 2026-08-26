@@ -73,6 +73,13 @@ MP_REGISTER_MODULE(MP_QSTR___main__, mp_module___main__);
  * to wake parked async workers. Defined here so py/runtime.o links the symbol
  * for every seat — no stubs needed. */
 pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release = NULL;
+
+#if MICROPY_PY_METAL
+/* CAS-GIL spin-poll hook: called from MP_THREAD_GIL_ENTER while waiting.
+ * modmetal.c sets this to pm_metal_async_poll so the REPL thread drains
+ * parked async workers instead of blocking its OS thread. */
+pm_metal_async_gil_poll_fn pm_metal_async_gil_poll = NULL;
+#endif
 #endif
 
 void mp_init(void) {
@@ -194,7 +201,10 @@ void mp_init(void) {
     #endif
 
     #if MICROPY_PY_THREAD_GIL
-    #if MICROPY_PY_THREAD && MICROPY_PY_THREAD_RECURSIVE_MUTEX
+    #if MICROPY_PY_METAL
+    MP_STATE_VM(gil_owner) = 0;
+    MP_STATE_VM(gil_count) = 0;
+    #elif MICROPY_PY_THREAD && MICROPY_PY_THREAD_RECURSIVE_MUTEX
     mp_thread_recursive_mutex_init(&MP_STATE_VM(gil_mutex));
     #else
     mp_thread_mutex_init(&MP_STATE_VM(gil_mutex));

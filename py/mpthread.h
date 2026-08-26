@@ -61,6 +61,65 @@ void mp_thread_recursive_mutex_unlock(mp_thread_recursive_mutex_t *mutex);
 
 typedef void (*pm_metal_async_gil_on_release_fn)(void);
 
+#if MICROPY_PY_METAL
+
+/* CAS-GIL: atomic owner+count replaces the pthread mutex.
+ * No OS thread ever blocks — REPL thread spin-polls pm_metal_async_gil_poll()
+ * on contention, servicing the async runner while waiting.
+ * Recursive re-entry: same thread bumps count, no deadlock.
+ *
+ * Everything is in macro statement-expressions. mpthread.h is included from
+ * mpstate.h before mp_state_vm_t is defined, so inline functions referencing
+ * MP_STATE_VM would not compile — only macros expanded at the call site work. */
+
+typedef void (*pm_metal_async_gil_poll_fn)(void);
+extern pm_metal_async_gil_poll_fn pm_metal_async_gil_poll;
+
+/* Private: non-blocking CAS acquire. Returns 1 on success, 0 on contention. */
+#define _MP_GIL_CAS_TRY() ({ \
+    int _ok = 0; \
+    mp_uint_t _tid = mp_thread_get_id(); \
+    if (MP_STATE_VM(gil_owner) == _tid) { \
+        MP_STATE_VM(gil_count) += 1; \
+        _ok = 1; \
+    } else if (MP_STATE_VM(gil_owner) == 0 && \
+               __sync_bool_compare_and_swap(&MP_STATE_VM(gil_owner), 0, _tid)) { \
+        MP_STATE_VM(gil_count) = 1; \
+        _ok = 1; \
+    } \
+    _ok; \
+})
+
+/* Private: blocking CAS acquire (never returns on metal seats). */
+#define _MP_GIL_CAS_ENTER() do { \
+    int _got = _MP_GIL_CAS_TRY(); \
+    if ((_got)) { break; } \
+    while (!(_got)) { \
+        if (pm_metal_async_gil_poll != NULL) { pm_metal_async_gil_poll(); } \
+        _got = _MP_GIL_CAS_TRY(); \
+    } \
+} while (0)
+
+/* Private: release the GIL. Recursive: decrements count, unlocks only at 0. */
+#define _MP_GIL_CAS_EXIT() do { \
+    if (MP_STATE_VM(gil_count) > 1) { \
+        MP_STATE_VM(gil_count) -= 1; \
+    } else { \
+        MP_STATE_VM(gil_count) = 0; \
+        __sync_synchronize(); \
+        MP_STATE_VM(gil_owner) = 0; \
+    } \
+} while (0)
+
+#define MP_THREAD_GIL_ENTER() _MP_GIL_CAS_ENTER()
+#define MP_THREAD_GIL_EXIT() do { \
+    _MP_GIL_CAS_EXIT(); \
+    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+} while (0)
+#define MP_THREAD_GIL_TRYLOCK() _MP_GIL_CAS_TRY()
+
+#else /* !MICROPY_PY_METAL — original pthread GIL */
+
 #if MICROPY_PY_THREAD_RECURSIVE_MUTEX
 #define MP_THREAD_GIL_ENTER() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
 #define MP_THREAD_GIL_EXIT() do { \
@@ -76,6 +135,8 @@ typedef void (*pm_metal_async_gil_on_release_fn)(void);
 } while (0)
 #define MP_THREAD_GIL_TRYLOCK() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #endif
+
+#endif /* MICROPY_PY_METAL */
 
 extern pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release;
 

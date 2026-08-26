@@ -268,6 +268,15 @@ typedef struct _mp_state_vm_t {
     #endif
 
     #if MICROPY_PY_THREAD_GIL
+    #if MICROPY_PY_METAL
+    // CAS-GIL: atomic owner+count replaces the pthread mutex on metal seats.
+    // The REPL thread spin-polls pm_metal_async_gil_poll() on contention instead
+    // of blocking its OS thread. Async workers trylock+park (Phase 4). Recursive
+    // re-entry (C callback stepping a vm_only task from the same thread) bumps
+    // count, no deadlock. Non-metal seats keep the original pthread mutex below.
+    mp_uint_t gil_owner;  // thread owning the GIL; 0 = unlocked
+    uint32_t  gil_count;  // recursive depth (≥ 1 while held)
+    #else
     // This is a global mutex used to make the VM/runtime thread-safe.
     // The owner thread (the boot/REPL thread is already executing bytecode) may
     // re-enter the interpreter through a C callback that steps a vm_only task
@@ -279,6 +288,7 @@ typedef struct _mp_state_vm_t {
     #else
     mp_thread_mutex_t gil_mutex;
     #endif
+    #endif /* MICROPY_PY_METAL */
     #endif
 
     #if MICROPY_OPT_MAP_LOOKUP_CACHE

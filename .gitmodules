@@ -115,3 +115,6 @@
 	path = lib/zenoh-pico
 	url = https://github.com/eclipse-zenoh/zenoh-pico.git
 	branch = main
+[submodule "lib/tcc"]
+	path = lib/tcc
+	url = https://github.com/TinyCC/tinycc.git
