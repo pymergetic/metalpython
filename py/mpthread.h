@@ -64,13 +64,16 @@ void mp_thread_recursive_mutex_unlock(mp_thread_recursive_mutex_t *mutex);
 // self-deadlock there. The recursive form matches the gc_mutex treatment.
 #define MP_THREAD_GIL_ENTER() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
 #define MP_THREAD_GIL_EXIT() mp_thread_recursive_mutex_unlock(&MP_STATE_VM(gil_mutex))
+#define MP_THREAD_GIL_TRYLOCK() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #else
 #define MP_THREAD_GIL_ENTER() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
 #define MP_THREAD_GIL_EXIT() mp_thread_mutex_unlock(&MP_STATE_VM(gil_mutex))
+#define MP_THREAD_GIL_TRYLOCK() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #endif
 #else
 #define MP_THREAD_GIL_ENTER()
 #define MP_THREAD_GIL_EXIT()
+#define MP_THREAD_GIL_TRYLOCK() 1
 #endif
 
 #endif // MICROPY_INCLUDED_PY_MPTHREAD_H
