@@ -85,6 +85,13 @@
 #if !defined(MICROPY_PERSISTENT_CODE_LOAD_NATIVE) && defined(__riscv) && __riscv_xlen == 64
     #define MICROPY_PERSISTENT_CODE_LOAD_NATIVE (1)
 #endif
+// jit.py's object loop compiles Python source to mpy bytes in-process
+// (µPy compiling Python, no host tool). Needs the save half of
+// persistentcode.c; load is on by default for this port.
+#if !defined(MICROPY_PERSISTENT_CODE_LOAD)
+#define MICROPY_PERSISTENT_CODE_LOAD (1)
+#endif
+#define MICROPY_PERSISTENT_CODE_SAVE (1)
 
 // Cannot include <sys/types.h>, as it may lead to symbol name clashes
 #if _FILE_OFFSET_BITS == 64 && !defined(__LP64__)

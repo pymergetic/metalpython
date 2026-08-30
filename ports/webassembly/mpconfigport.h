@@ -45,6 +45,9 @@
 
 #define MICROPY_ALLOC_PATH_MAX      (256)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
+// jit.py's object loop: compile Python source to mpy bytes in-process and
+// load them back (µPy compiling Python, no host tool in the chain).
+#define MICROPY_PERSISTENT_CODE_SAVE (1)
 #define MICROPY_COMP_ALLOW_TOP_LEVEL_AWAIT (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
 #define MICROPY_ENABLE_GC           (1)
