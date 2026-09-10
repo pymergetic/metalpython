@@ -59,12 +59,12 @@ void mp_thread_recursive_mutex_unlock(mp_thread_recursive_mutex_t *mutex);
 #if MICROPY_PY_THREAD && MICROPY_PY_THREAD_GIL
 #include "py/mpstate.h"
 
-typedef void (*pm_metal_async_gil_on_release_fn)(void);
+typedef void (*pm_metal_coop_gil_on_release_fn)(void);
 
 #if MICROPY_PY_METAL
 
 /* CAS-GIL: atomic owner+count replaces the pthread mutex.
- * No OS thread ever blocks — REPL thread spin-polls pm_metal_async_gil_poll()
+ * No OS thread ever blocks — REPL thread spin-polls pm_metal_coop_gil_poll()
  * on contention, servicing the async runner while waiting.
  * Recursive re-entry: same thread bumps count, no deadlock.
  *
@@ -72,8 +72,8 @@ typedef void (*pm_metal_async_gil_on_release_fn)(void);
  * mpstate.h before mp_state_vm_t is defined, so inline functions referencing
  * MP_STATE_VM would not compile — only macros expanded at the call site work. */
 
-typedef void (*pm_metal_async_gil_poll_fn)(void);
-extern pm_metal_async_gil_poll_fn pm_metal_async_gil_poll;
+typedef void (*pm_metal_coop_gil_poll_fn)(void);
+extern pm_metal_coop_gil_poll_fn pm_metal_coop_gil_poll;
 
 /* Private: non-blocking CAS acquire. Returns 1 on success, 0 on contention. */
 #define _MP_GIL_CAS_TRY() ({ \
@@ -95,7 +95,7 @@ extern pm_metal_async_gil_poll_fn pm_metal_async_gil_poll;
     int _got = _MP_GIL_CAS_TRY(); \
     if ((_got)) { break; } \
     while (!(_got)) { \
-        if (pm_metal_async_gil_poll != NULL) { pm_metal_async_gil_poll(); } \
+        if (pm_metal_coop_gil_poll != NULL) { pm_metal_coop_gil_poll(); } \
         _got = _MP_GIL_CAS_TRY(); \
     } \
 } while (0)
@@ -114,7 +114,7 @@ extern pm_metal_async_gil_poll_fn pm_metal_async_gil_poll;
 #define MP_THREAD_GIL_ENTER() _MP_GIL_CAS_ENTER()
 #define MP_THREAD_GIL_EXIT() do { \
     _MP_GIL_CAS_EXIT(); \
-    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+    if (pm_metal_coop_gil_on_release != NULL) { pm_metal_coop_gil_on_release(); } \
 } while (0)
 #define MP_THREAD_GIL_TRYLOCK() _MP_GIL_CAS_TRY()
 
@@ -124,21 +124,21 @@ extern pm_metal_async_gil_poll_fn pm_metal_async_gil_poll;
 #define MP_THREAD_GIL_ENTER() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
 #define MP_THREAD_GIL_EXIT() do { \
     mp_thread_recursive_mutex_unlock(&MP_STATE_VM(gil_mutex)); \
-    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+    if (pm_metal_coop_gil_on_release != NULL) { pm_metal_coop_gil_on_release(); } \
 } while (0)
 #define MP_THREAD_GIL_TRYLOCK() mp_thread_recursive_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #else
 #define MP_THREAD_GIL_ENTER() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 1)
 #define MP_THREAD_GIL_EXIT() do { \
     mp_thread_mutex_unlock(&MP_STATE_VM(gil_mutex)); \
-    if (pm_metal_async_gil_on_release != NULL) { pm_metal_async_gil_on_release(); } \
+    if (pm_metal_coop_gil_on_release != NULL) { pm_metal_coop_gil_on_release(); } \
 } while (0)
 #define MP_THREAD_GIL_TRYLOCK() mp_thread_mutex_lock(&MP_STATE_VM(gil_mutex), 0)
 #endif
 
 #endif /* MICROPY_PY_METAL */
 
-extern pm_metal_async_gil_on_release_fn pm_metal_async_gil_on_release;
+extern pm_metal_coop_gil_on_release_fn pm_metal_coop_gil_on_release;
 
 #else
 #define MP_THREAD_GIL_ENTER()

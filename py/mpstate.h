@@ -270,7 +270,7 @@ typedef struct _mp_state_vm_t {
     #if MICROPY_PY_THREAD_GIL
     #if MICROPY_PY_METAL
     // CAS-GIL: atomic owner+count replaces the pthread mutex on metal seats.
-    // The REPL thread spin-polls pm_metal_async_gil_poll() on contention instead
+    // The REPL thread spin-polls pm_metal_coop_gil_poll() on contention instead
     // of blocking its OS thread. Async workers trylock+park (Phase 4). Recursive
     // re-entry (C callback stepping a vm_only task from the same thread) bumps
     // count, no deadlock. Non-metal seats keep the original pthread mutex below.
