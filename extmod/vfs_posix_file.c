@@ -129,6 +129,19 @@ static mp_uint_t vfs_posix_file_read(mp_obj_t o_in, void *buf, mp_uint_t size, i
 static mp_uint_t vfs_posix_file_write(mp_obj_t o_in, const void *buf, mp_uint_t size, int *errcode) {
     mp_obj_vfs_posix_file_t *o = MP_OBJ_TO_PTR(o_in);
     check_fd_is_open(o);
+    #if defined(MICROPY_PY_METAL) && MICROPY_PY_METAL
+    if (o->fd == STDOUT_FILENO) {
+        // The metal seat's stdout is the console card, not the file
+        // descriptor. This port has sys.stdout, so print() writes through
+        // this stream object rather than through mp_hal, and without this
+        // branch console 0 would hold the boot tree and nothing a person
+        // ever printed - while every other seat, having no sys.stdout, sends
+        // print() to the console via mp_plat_print. mp_hal_stdout_tx_strn
+        // still reaches the descriptor, from the console's own viewport.
+        mp_hal_stdout_tx_strn(buf, size);
+        return size;
+    }
+    #endif
     #if MICROPY_PY_OS_DUPTERM
     if (o->fd <= STDERR_FILENO) {
         mp_hal_stdout_tx_strn(buf, size);

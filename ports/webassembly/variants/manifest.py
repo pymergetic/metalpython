@@ -57,5 +57,6 @@ package(
 # card module carries no __path__ for a Python submodule to be found under.
 if os.environ.get("MICROPY_PY_METAL") == "1":
     _seat = "$(MPY_DIR)/extmod/metal/src/pymergetic/metal/inspect"
-    freeze(_seat, ("catalog_render.py", "metal_packs.py", "artifacts.py", "openapi.py"))
+    freeze(_seat, ("catalog_render.py", "metal_packs.py", "metal_repl.py", "artifacts.py",
+                    "openapi.py"))
     freeze(_seat + "/www/_compiled", ("package_html.py", "shell_html.py"))
