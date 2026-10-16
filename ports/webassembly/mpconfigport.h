@@ -32,7 +32,8 @@
 #include <stdlib.h> // IWYU pragma: keep (malloc for MICROPY_GC_SPLIT_HEAP_AUTO)
 
 // Variant-specific definitions. Makefile passes -I$(VARIANT_DIR). Quoted
-// fallback is for clangd (no variant -I; fuzzy-matches firmware mpconfigport.h).
+// fallback is for clangd (no variant -I; workspace CDB can fuzzy-match
+// metalpython firmware extmod/metal/port/mpconfigport.h).
 #if __has_include("mpconfigvariant.h")
 #include "mpconfigvariant.h"
 #else
@@ -45,9 +46,6 @@
 
 #define MICROPY_ALLOC_PATH_MAX      (256)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
-// jit.py's object loop: compile Python source to mpy bytes in-process and
-// load them back (µPy compiling Python, no host tool in the chain).
-#define MICROPY_PERSISTENT_CODE_SAVE (1)
 #define MICROPY_COMP_ALLOW_TOP_LEVEL_AWAIT (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
 #define MICROPY_ENABLE_GC           (1)

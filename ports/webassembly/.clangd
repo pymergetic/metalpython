@@ -1,6 +1,6 @@
 # This directory's mpconfigport.h must not fuzzy-match firmware
 # metalpython extmod/metal/port/mpconfigport.h (workspace
-# --compile-commands-dir=.vscode). genhdr is build-metal.
+# --compile-commands-dir=.vscode).
 CompileFlags:
   CompilationDatabase: None
   Add:
@@ -8,13 +8,8 @@ CompileFlags:
     - -std=gnu11
     - -I.
     - -Ivariants/standard
-    - -Ibuild-metal
     - -I../..
-    - -I../../extmod/metal/src
-    - -I../../extmod/wasmmod
-    - -I../../extmod/wasmmod/src
     - -DMICROPY_PY_WASM=1
-    - -DMICROPY_PY_METAL=1
     - -DMICROPY_MODULE_BUILTIN_INIT=1
     - -DMICROPY_MODULE_BUILTIN_SUBPACKAGES=1
     - -Wno-unknown-attributes
