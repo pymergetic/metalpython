@@ -1,3 +1,7 @@
+# yaml-language-server: $schema=../../../.vscode/clangd.schema.json
+# (os-sdk workspace copy of the SchemaStore clangd schema with the
+# CompileFlags.CompilationDatabase oneOf bug fixed — "None"/"Ancestors"
+# match both upstream arms; see that schema file's header.)
 # This directory's mpconfigport.h must not fuzzy-match firmware
 # metalpython extmod/metal/port/mpconfigport.h (workspace
 # --compile-commands-dir=.vscode).
